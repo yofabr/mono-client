@@ -10,16 +10,15 @@ import (
 )
 
 type Application struct {
-	databases *databases.Databases
+	Databases *databases.Databases
 }
 
 func NewApp() *Application {
-
 	db := databases.Databases{}
 
 	app := Application{}
 
-	app.databases = &db
+	app.Databases = &db
 
 	return &app
 }
@@ -37,10 +36,6 @@ func (a *Application) Init() {
 	if err != nil {
 		log.Fatal("Error while parsing redis db")
 	}
-	a.databases.NewPostgresInit(pg_dns)                   // Postgres init
-	a.databases.NewRedis(redis_add, redis_pass, redis_db) /// Redis init
+	a.Databases.NewPostgresInit(pg_dns)                   // Postgres init
+	a.Databases.NewRedis(redis_add, redis_pass, redis_db) /// Redis init
 }
-
-// func InitApp() {
-
-// }

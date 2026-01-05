@@ -11,7 +11,15 @@ import (
 
 type Databases struct {
 	postgres *pgxpool.Pool
-	redis    string
+	redis    *redis.Client
+}
+
+func (d *Databases) Redis() *redis.Client {
+	return d.redis
+}
+
+func (d *Databases) PG() *pgxpool.Pool {
+	return d.postgres
 }
 
 func (d *Databases) NewPostgresInit(dsn string) {
@@ -30,7 +38,7 @@ func (d *Databases) NewPostgresInit(dsn string) {
 	d.postgres = pool
 }
 
-func (d *Databases) NewRedis(addr, password string, db int) *redis.Client {
+func (d *Databases) NewRedis(addr, password string, db int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -49,5 +57,5 @@ func (d *Databases) NewRedis(addr, password string, db int) *redis.Client {
 		log.Fatal("redis connection failed:", err)
 	}
 
-	return rdb
+	d.redis = rdb
 }

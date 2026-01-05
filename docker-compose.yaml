@@ -11,6 +11,7 @@ services:
       REDIS_ADD=redis.adress
       REDIS_PASS=redis.pass
       REDIS_DB=redis.db
+      SECRET=some-secret
 
     ports:
       - "8080:8080"
