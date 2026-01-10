@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -49,9 +48,15 @@ func (api *Api) Init() {
 			return
 		}
 		ip := getClientIP(r)
-		authHandler.Login(ip, creds.Email, creds.Password)
-		log.Println("Login attempt:", creds.Email, creds.Password)
-		w.Write([]byte(fmt.Sprintf("Login received for: %s", creds.Email)))
+		res, err := authHandler.Login(ip, creds.Email, creds.Password)
+
+		msg := fmt.Sprintf("Error while loggin: %s", err)
+		if err != nil {
+			w.Write([]byte(msg + "\n"))
+			return
+		}
+
+		w.Write([]byte(res + "\n"))
 	})
 
 	// Register handler
@@ -71,16 +76,21 @@ func (api *Api) Init() {
 		}
 
 		ip := getClientIP(r)
-		authHandler.Register(ip, creds.Email, creds.Password)
+		res, err := authHandler.Register(ip, creds.Email, creds.Password)
 
-		log.Println("Register attempt:", creds.Email, creds.Password)
-		w.Write([]byte(fmt.Sprintf("Register received for: %s", creds.Email)))
+		msg := fmt.Sprintf("Error while loggin: %s", err)
+		if err != nil {
+			w.Write([]byte(msg + "\n"))
+			return
+		}
+
+		w.Write([]byte(res + "\n"))
 	})
 	// log.Println("Server starting on :8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Println("Error starting server:", err)
-	}
+	// err := http.ListenAndServe(":8080", nil)
+	// if err != nil {
+	// 	log.Println("Error starting server:", err)
+	// }
 }
 
 func getClientIP(r *http.Request) string {
