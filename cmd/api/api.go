@@ -27,7 +27,8 @@ func (api *Api) Init() {
 	// Root handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		clientIP := getClientIP(r)
-		w.Write([]byte("Your IP is: " + clientIP))
+		msg := "Your IP is: " + clientIP
+		w.Write([]byte(msg + "\n"))
 	})
 
 	authHandler := auth.NewAuthHandler(api.app)
@@ -40,8 +41,10 @@ func (api *Api) Init() {
 		}
 
 		var creds auth.Credentials
-		err := json.NewDecoder(r.Body).Decode(&creds)
-		if err != nil {
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields()
+
+		if dec.Decode(&creds) != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -59,8 +62,10 @@ func (api *Api) Init() {
 		}
 
 		var creds auth.Credentials
-		err := json.NewDecoder(r.Body).Decode(&creds)
-		if err != nil {
+		dec := json.NewDecoder(r.Body)
+		dec.DisallowUnknownFields()
+
+		if dec.Decode(&creds) != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -71,7 +76,7 @@ func (api *Api) Init() {
 		log.Println("Register attempt:", creds.Email, creds.Password)
 		w.Write([]byte(fmt.Sprintf("Register received for: %s", creds.Email)))
 	})
-	log.Println("Server starting on :8080")
+	// log.Println("Server starting on :8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Println("Error starting server:", err)
