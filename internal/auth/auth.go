@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"time"
@@ -19,6 +20,12 @@ type Credentials struct {
 
 type AuthHandler struct {
 	app *application.Application
+}
+
+type AuthData struct {
+	UserID string `json:"user_id"`
+	IP     string `json:"ip"`
+	Token  string `json:"token"`
 }
 
 func NewAuthHandler(app *application.Application) *AuthHandler {
@@ -48,7 +55,17 @@ func (auth *AuthHandler) Register(IP, email, pass string) (string, error) {
 		return "", err
 	}
 
-	return userID, nil
+	token, err := auth.GenerateToken(userID)
+
+	if err != nil {
+		return "", err
+	}
+
+	if err := auth.SaveAuthentication(ctx, IP, userID, token); err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
@@ -80,17 +97,50 @@ func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 		return "", errors.New("Invalid credentials")
 	}
 
-	return userID, nil
+	token, err := auth.GenerateToken(userID)
+
+	if err != nil {
+		return "", err
+	}
+
+	if err := auth.SaveAuthentication(ctx, IP, userID, token); err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
-func (auth *AuthHandler) GenerateToken(userID string, IP string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
+func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, token string) error {
+	redisClient := auth.app.Databases.Redis()
 
+	data := AuthData{
+		UserID: userId,
+		IP:     IP,
+		Token:  token,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	// Use pipeline to set all keys atomically
+	pipe := redisClient.TxPipeline()
+
+	pipe.Set(ctx, "auth:token:"+token, jsonData, 24*time.Hour)
+	pipe.Set(ctx, "auth:user:"+userId, token, 24*time.Hour)
+	pipe.Set(ctx, "auth:ip:"+IP, token, 24*time.Hour)
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (auth *AuthHandler) GenerateToken(userID string) (string, error) {
 	secret := os.Getenv("SECRET")
-	rd_client := auth.app.Databases.Redis()
-
-	rd_client.Set(ctx, userID, IP, time.Hour*24*30)
 
 	claims := jwt.MapClaims{
 		"sub": userID,
