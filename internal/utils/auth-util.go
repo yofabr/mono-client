@@ -13,3 +13,7 @@ func Hash(text string) (string, error) {
 func Compare(text string, hashed string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(text))
 }
+
+func KeyCacheUserID(userId string) string {
+	return "auth:user:" + userId
+}

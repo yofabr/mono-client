@@ -2,9 +2,10 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,11 +23,11 @@ type AuthHandler struct {
 	app *application.Application
 }
 
-type AuthData struct {
-	UserID string `json:"user_id"`
-	IP     string `json:"ip"`
-	Token  string `json:"token"`
-}
+// type AuthData struct {
+// 	UserID string `json:"user_id"`
+// 	IP     string `json:"ip"`
+// 	Token  string `json:"token"`
+// }
 
 func NewAuthHandler(app *application.Application) *AuthHandler {
 	return &AuthHandler{app: app}
@@ -103,6 +104,10 @@ func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 		return "", err
 	}
 
+	if err := auth.CheckAuthAbility(ctx, IP, userID); err != nil {
+		return "", err
+	}
+
 	if err := auth.SaveAuthentication(ctx, IP, userID, token); err != nil {
 		return "", err
 	}
@@ -110,30 +115,60 @@ func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 	return token, nil
 }
 
+func (auth *AuthHandler) CheckAuthAbility(ctx context.Context, IP string, userId string) error {
+	redis_client := auth.app.Databases.Redis()
+
+	userIdKey := utils.KeyCacheUserID(userId)
+
+	data, err := redis_client.Get(ctx, userIdKey).Result()
+	if err != nil {
+		return nil
+	}
+
+	data = strings.Split(data, "|-|")[1]
+
+	fmt.Println("Existing IP:", data)
+	fmt.Println("User IP:", IP)
+
+	if data != IP {
+		return errors.New("Another device has already signed into this account")
+	}
+
+	// fmt.Println("User exists with userID:", UserIDAuthExists)
+
+	//
+	return nil
+}
+
 func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, token string) error {
 	redisClient := auth.app.Databases.Redis()
 
-	data := AuthData{
-		UserID: userId,
-		IP:     IP,
-		Token:  token,
-	}
+	// data := AuthData{
+	// 	UserID: userId,
+	// 	IP:     IP,
+	// 	Token:  token,
+	// }
 
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
+	// jsonData, err := json.Marshal(data)
+	// if err != nil {
+	// 	return err
+	// }
 
 	// Use pipeline to set all keys atomically
 	pipe := redisClient.TxPipeline()
+	UserIDKey := utils.KeyCacheUserID(userId)
+	value := fmt.Sprintf("%v|-|%v", token, IP)
 
-	pipe.Set(ctx, "auth:token:"+token, jsonData, 24*time.Hour)
-	pipe.Set(ctx, "auth:user:"+userId, token, 24*time.Hour)
-	pipe.Set(ctx, "auth:ip:"+IP, token, 24*time.Hour)
+	pipe.Set(ctx, UserIDKey, value, 24*time.Hour)
 
-	_, err = pipe.Exec(ctx)
+	_, err := pipe.Exec(ctx)
 	if err != nil {
 		return err
+	}
+	select {
+	case <-ctx.Done():
+		return errors.New("Timeout Reached")
+	default:
 	}
 
 	return nil
