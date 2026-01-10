@@ -140,7 +140,7 @@ func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, tok
 }
 
 func (auth *AuthHandler) GenerateToken(userID string) (string, error) {
-	secret := os.Getenv("SECRET")
+	secret := []byte(os.Getenv("SECRET"))
 
 	claims := jwt.MapClaims{
 		"sub": userID,
