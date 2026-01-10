@@ -6,23 +6,22 @@ services:
     container_name: mono-client
     environment:
     
-      PORT=8080
-      PG_DSN=pgconn.stirng
-      REDIS_ADD=redis.adress
-      REDIS_PASS=redis.pass
-      REDIS_DB=redis.db
-      SECRET=some-secret
+      PORT=:8080
+      PG_DSN=postgresql://app_user:app_pass@localhost:5432/app_db
+      REDIS_ADD=localhost:6379
+      REDIS_PASS=""
+      REDIS_DB=0
 
     ports:
       - "8080:8080"
   
   db:
-    image: postgres:15.15-trixie
+    image: postgres:16
     restart: always
     environment:
-      POSTGRES_PASSWORD: example_password
-      POSTGRES_USER: myuser 
-      POSTGRES_DB: mydatabase
+      POSTGRES_PASSWORD: app_pass
+      POSTGRES_USER: app_user 
+      POSTGRES_DB: app_db
     ports:
       - "5432:5432"
     volumes:
