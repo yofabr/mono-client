@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/yofabr/mono-client/cmd/api"
 	"github.com/yofabr/mono-client/cmd/application"
 )
 
 func main() {
+	godotenv.Load()
 
 	app := application.NewApp()
 	app.Init()
@@ -16,6 +19,8 @@ func main() {
 	api := api.NewApi(*app)
 	api.Init()
 
-	err := http.ListenAndServe(":8080", nil)
+	port := os.Getenv("PORT")
+
+	err := http.ListenAndServe(port, nil)
 	fmt.Println("Error while starting the app..:", err)
 }

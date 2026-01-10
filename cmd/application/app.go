@@ -5,7 +5,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/joho/godotenv"
 	"github.com/yofabr/mono-client/internal/databases"
 )
 
@@ -24,7 +23,7 @@ func NewApp() *Application {
 }
 
 func (a *Application) Init() {
-	godotenv.Load()
+	// godotenv.Load()
 
 	defer log.Println("Application is initialized successfully")
 
