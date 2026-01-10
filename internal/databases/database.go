@@ -43,15 +43,22 @@ func (d *Databases) NewRedis(addr, password string, db int) {
 	defer cancel()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:         addr,     // "localhost:6379"
-		Password:     password, // "" if none
-		DB:           db,       // 0 by default
+		Addr:         addr, // "localhost:6379"
+		Password:     password,
+		DB:           db,
 		DialTimeout:  5 * time.Second,
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
 		PoolSize:     10,
 		MinIdleConns: 2,
 	})
+
+	pong, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		panic(err)
+	}
+
+	log.Println("Connected to Redis:", pong)
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatal("redis connection failed:", err)
