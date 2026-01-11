@@ -6,7 +6,7 @@ services:
     container_name: mono-client
     environment:
       PORT: 8080
-      PG_DSN: postgresql://app_user:app_pass@db:5432/app_db
+      PG_DSN: postgresql://app_user:app_pass@db:5432/app_db?sslmode=disable
       REDIS_ADD: redis:6379
       REDIS_PASS: ""
       REDIS_DB: 0

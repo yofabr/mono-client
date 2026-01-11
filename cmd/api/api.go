@@ -26,7 +26,7 @@ func (api *Api) Init() {
 	// Root handler
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		clientIP := getClientIP(r)
-		msg := "Your IP is: " + clientIP
+		msg := "Your IP Address is: " + clientIP
 		w.Write([]byte(msg + "\n"))
 	})
 

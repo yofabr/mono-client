@@ -19,8 +19,8 @@ func main() {
 	api := api.NewApi(*app)
 	api.Init()
 
-	port := os.Getenv("PORT")
+	port := ":" + os.Getenv("PORT")
 
 	err := http.ListenAndServe(port, nil)
-	fmt.Println("Error while starting the app..:", err)
+	fmt.Println("Error while starting the app:", err)
 }
