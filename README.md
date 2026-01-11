@@ -5,8 +5,5 @@ This app is built with golang showing how to allow only one device linked to an 
 
 A device can signin to an account if it has no device linked to that account. if there exists another client or device connected to that account, the server prevents it from signing in to that account (meaning there shouldn't exist any device connected to that account before signing in).
 
-### Tech stack:
-
-#### Backend: Golang, Redis, Postgres DB
-#### Frontend: Elm -> under development
-#### Container: Docker
+### Tech stack: 
+Golang, Redis, Pg
