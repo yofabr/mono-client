@@ -1,42 +1,37 @@
 version: '3.8'
-services:
 
+services:
   app:
     build: .
     container_name: mono-client
     environment:
-      PORT=8080
-      PG_DSN=postgresql://app_user:app_pass@db:5432/app_db
-      REDIS_ADD=redis:6379
-      REDIS_PASS=""
-      REDIS_DB=0
-
+      PORT: 8080
+      PG_DSN: postgresql://app_user:app_pass@db:5432/app_db
+      REDIS_ADD: redis:6379
+      REDIS_PASS: ""
+      REDIS_DB: 0
     ports:
       - "8080:8080"
-  
+    depends_on:
+      - db
+      - redis
+
   db:
     image: postgres:16
     restart: always
     environment:
       POSTGRES_PASSWORD: app_pass
-      POSTGRES_USER: app_user 
+      POSTGRES_USER: app_user
       POSTGRES_DB: app_db
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   redis:
     image: redis:latest
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-
 
 volumes:
   pgdata:
