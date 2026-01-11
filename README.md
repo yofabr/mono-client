@@ -1,2 +1,12 @@
 # mono-client
-single-client / single-device per account
+> single-client / single-device per account
+
+This app is built with golang showing how to allow only one device linked to an account. This tracks the clients IP address and ensures that only one device can be authorized at a time for the selected account. The authotized device's IP addresses are cached in redis memory with their corresponding token and userID. 
+
+A device can signin to an account if it has no device linked to that account. if there exists another client or device connected to that account, the server prevents it from signing in to that account (meaning there shouldn't exist any device connected to that account before signing in).
+
+### Tech stack:
+
+#### Backend: Golang, Redis, Postgres DB
+#### Frontend: Elm -> under development
+#### Container: Docker
