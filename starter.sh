@@ -3,6 +3,7 @@ set -e
 echo "Pulling Docker images..."
 docker pull postgres:16
 docker pull redis:latest
+docker pull golang:1.25.5-trixie
 
 echo "Starting services with Docker Compose..."
 docker compose up -d
