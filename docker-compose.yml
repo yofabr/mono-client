@@ -4,6 +4,7 @@ services:
   app:
     build: .
     container_name: mono-client
+    restart: unless-stopped
     environment:
       PORT: 8080
       PG_DSN: postgresql://app_user:app_pass@db:5432/app_db?sslmode=disable
