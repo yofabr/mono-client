@@ -17,7 +17,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_healthys
+        condition: service_healthy
 
   db:
     image: postgres:16
