@@ -95,7 +95,7 @@ func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 	}
 
 	if err := utils.Compare(pass, passwordHash); err != nil {
-		return "", errors.New("Invalid credentials")
+		return "", errors.New("invalid credentials")
 	}
 
 	token, err := auth.GenerateToken(userID)
@@ -131,7 +131,7 @@ func (auth *AuthHandler) CheckAuthAbility(ctx context.Context, IP string, userId
 	fmt.Println("User IP:", IP)
 
 	if data != IP {
-		return errors.New("Another device has already signed into this account")
+		return errors.New("another device has already signed into this account")
 	}
 
 	// fmt.Println("User exists with userID:", UserIDAuthExists)
@@ -167,7 +167,7 @@ func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, tok
 	}
 	select {
 	case <-ctx.Done():
-		return errors.New("Timeout Reached")
+		return errors.New("timeout reached")
 	default:
 	}
 
