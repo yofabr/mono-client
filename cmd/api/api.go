@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -27,7 +26,11 @@ func (api *Api) Init() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		clientIP := getClientIP(r)
 		msg := "Your IP Address is: " + clientIP
-		w.Write([]byte(msg + "\n"))
+		_, err := w.Write([]byte(msg + "\n"))
+
+		if err != nil {
+			return
+		}
 	})
 
 	authHandler := auth.NewAuthHandler(api.app)
@@ -50,13 +53,15 @@ func (api *Api) Init() {
 		ip := getClientIP(r)
 		res, err := authHandler.Login(ip, creds.Email, creds.Password)
 
-		msg := fmt.Sprintf("Error while loggin: %s", err)
+		// msg := fmt.Sprintf("Error while loggin: %s", err)
 		if err != nil {
-			w.Write([]byte(msg + "\n"))
 			return
 		}
 
-		w.Write([]byte(res + "\n"))
+		_, err = w.Write([]byte(res + "\n"))
+		if err != nil {
+			return
+		}
 	})
 
 	// Register handler
@@ -78,13 +83,14 @@ func (api *Api) Init() {
 		ip := getClientIP(r)
 		res, err := authHandler.Register(ip, creds.Email, creds.Password)
 
-		msg := fmt.Sprintf("Error while loggin: %s", err)
 		if err != nil {
-			w.Write([]byte(msg + "\n"))
 			return
 		}
 
-		w.Write([]byte(res + "\n"))
+		_, err = w.Write([]byte(res + "\n"))
+		if err != nil {
+			return
+		}
 	})
 	// log.Println("Server starting on :8080")
 	// err := http.ListenAndServe(":8080", nil)
