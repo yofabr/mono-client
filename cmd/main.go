@@ -11,7 +11,11 @@ import (
 )
 
 func main() {
-	godotenv.Load()
+	err := godotenv.Load()
+
+	if err != nil {
+		panic("Unable to load environmental variables")
+	}
 
 	app := application.NewApp()
 	app.Init()
@@ -21,6 +25,7 @@ func main() {
 
 	port := ":" + os.Getenv("PORT")
 
-	err := http.ListenAndServe(port, nil)
-	fmt.Println("Error while starting the app:", err)
+	if err := http.ListenAndServe(port, nil); err != nil {
+		fmt.Println("Error while starting the app:", err)
+	}
 }
