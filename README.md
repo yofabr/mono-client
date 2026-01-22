@@ -7,3 +7,17 @@ A device can signin to an account if it has no device linked to that account. if
 
 ### Tech stack: 
 Golang, Redis, Pg
+
+
+### Local starter
+
+There are two starter configs in the starters, starter-docker.sh and starter-podman.sh (if you are using Podman daemon).
+
+Make these shell scripts executable using 
+
+bash ```
+chmod +x ./starters/starter-*.sh
+
+./starters/starter-*
+```
+
