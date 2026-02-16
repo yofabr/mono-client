@@ -21,3 +21,21 @@ chmod +x ./starters/starter-*.sh
 ./starters/starter-*
 ```
 
+
+## Kubernetes
+
+A starter Kubernetes manifest is available at `k8s/mono-client.yaml`.
+
+It includes:
+- Namespace
+- Postgres + Redis Deployments/Services/PVCs
+- App Deployment/Service
+- Secrets for Postgres credentials and app `.env` values
+
+### Deploy
+
+```bash
+kubectl apply -f k8s/mono-client.yaml
+```
+
+> Note: the app deployment uses image `mono-client:latest` by default. Build and push that image (or edit the manifest to your registry image) before deploying.
