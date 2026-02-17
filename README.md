@@ -9,6 +9,18 @@ A device can signin to an account if it has no device linked to that account. if
 Golang, Redis, Pg
 
 
+### Nix (optional)
+
+Nix is **not required** for this project. You can keep using Docker/Podman starter scripts.
+
+If you prefer a reproducible local toolchain, this repo now includes a `flake.nix` dev shell.
+
+```bash
+nix develop
+```
+
+This shell provides `go`, `gopls`, `golangci-lint`, `air`, `redis`, and `postgresql`.
+
 ### Local starter
 
 There are two starter configs in the starters, starter-docker.sh and starter-podman.sh (if you are using Podman daemon).
