@@ -9,7 +9,7 @@ A device can signin to an account if it has no device linked to that account. if
 Golang, Redis, Pg
 
 
-### Nix (optional)
+### Nix
 
 Nix is **not required** for this project. You can keep using Docker/Podman starter scripts.
 
