@@ -11,8 +11,6 @@ Golang, Redis, Pg
 
 ### Nix
 
-Nix is **not required** for this project. You can keep using Docker/Podman starter scripts.
-
 If you prefer a reproducible local toolchain, this repo now includes a `flake.nix` dev shell.
 
 ```bash
