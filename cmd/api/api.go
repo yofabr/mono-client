@@ -5,9 +5,11 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/yofabr/mono-client/cmd/application"
 	"github.com/yofabr/mono-client/internal/auth"
+	"github.com/yofabr/mono-client/internal/middleware"
 )
 
 type Api struct {
@@ -34,9 +36,10 @@ func (api *Api) Init() {
 	})
 
 	authHandler := auth.NewAuthHandler(api.app)
+	authRateLimiter := middleware.NewRateLimiter(5, time.Minute)
 
 	// Login handler
-	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/login", authRateLimiter.Handler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
 			return
@@ -53,7 +56,6 @@ func (api *Api) Init() {
 		ip := getClientIP(r)
 		res, err := authHandler.Login(ip, creds.Email, creds.Password)
 
-		// msg := fmt.Sprintf("Error while loggin: %s", err)
 		if err != nil {
 			return
 		}
@@ -62,10 +64,12 @@ func (api *Api) Init() {
 		if err != nil {
 			return
 		}
-	})
+	}, func(r *http.Request) string {
+		return "/login:" + getClientIP(r)
+	}))
 
 	// Register handler
-	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/register", authRateLimiter.Handler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
 			return
@@ -91,12 +95,9 @@ func (api *Api) Init() {
 		if err != nil {
 			return
 		}
-	})
-	// log.Println("Server starting on :8080")
-	// err := http.ListenAndServe(":8080", nil)
-	// if err != nil {
-	// 	log.Println("Error starting server:", err)
-	// }
+	}, func(r *http.Request) string {
+		return "/register:" + getClientIP(r)
+	}))
 }
 
 func getClientIP(r *http.Request) string {
