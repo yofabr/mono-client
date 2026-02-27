@@ -14,25 +14,23 @@ import (
 	"github.com/yofabr/mono-client/internal/utils"
 )
 
+// Credentials is the input payload for registration/login endpoints.
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// AuthHandler contains auth-specific use-cases backed by Postgres + Redis.
 type AuthHandler struct {
 	app *application.Application
 }
 
-// type AuthData struct {
-// 	UserID string `json:"user_id"`
-// 	IP     string `json:"ip"`
-// 	Token  string `json:"token"`
-// }
-
+// NewAuthHandler creates an auth service bound to the shared application state.
 func NewAuthHandler(app *application.Application) *AuthHandler {
 	return &AuthHandler{app: app}
 }
 
+// Register creates a new user and stores an active auth record in Redis.
 func (auth *AuthHandler) Register(IP, email, pass string) (string, error) {
 	db := auth.app.Databases.PG()
 
@@ -57,7 +55,6 @@ func (auth *AuthHandler) Register(IP, email, pass string) (string, error) {
 	}
 
 	token, err := auth.GenerateToken(userID)
-
 	if err != nil {
 		return "", err
 	}
@@ -69,6 +66,7 @@ func (auth *AuthHandler) Register(IP, email, pass string) (string, error) {
 	return token, nil
 }
 
+// Login verifies credentials and enforces a single-IP session policy.
 func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -99,7 +97,6 @@ func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 	}
 
 	token, err := auth.GenerateToken(userID)
-
 	if err != nil {
 		return "", err
 	}
@@ -115,16 +112,18 @@ func (auth *AuthHandler) Login(IP, email, pass string) (string, error) {
 	return token, nil
 }
 
+// CheckAuthAbility ensures the current login IP matches an existing active session.
 func (auth *AuthHandler) CheckAuthAbility(ctx context.Context, IP string, userId string) error {
-	redis_client := auth.app.Databases.Redis()
-
+	redisClient := auth.app.Databases.Redis()
 	userIdKey := utils.KeyCacheUserID(userId)
 
-	data, err := redis_client.Get(ctx, userIdKey).Result()
+	data, err := redisClient.Get(ctx, userIdKey).Result()
 	if err != nil {
+		// No existing session stored -> allow login.
 		return nil
 	}
 
+	// Saved format is: token|-|ip.
 	data = strings.Split(data, "|-|")[1]
 
 	fmt.Println("Existing IP:", data)
@@ -134,37 +133,24 @@ func (auth *AuthHandler) CheckAuthAbility(ctx context.Context, IP string, userId
 		return errors.New("another device has already signed into this account")
 	}
 
-	// fmt.Println("User exists with userID:", UserIDAuthExists)
-
-	//
 	return nil
 }
 
+// SaveAuthentication writes the latest token+ip pair for the user with a TTL.
 func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, token string) error {
 	redisClient := auth.app.Databases.Redis()
 
-	// data := AuthData{
-	// 	UserID: userId,
-	// 	IP:     IP,
-	// 	Token:  token,
-	// }
-
-	// jsonData, err := json.Marshal(data)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// Use pipeline to set all keys atomically
 	pipe := redisClient.TxPipeline()
-	UserIDKey := utils.KeyCacheUserID(userId)
+	userIDKey := utils.KeyCacheUserID(userId)
 	value := fmt.Sprintf("%v|-|%v", token, IP)
 
-	pipe.Set(ctx, UserIDKey, value, 24*time.Hour)
+	pipe.Set(ctx, userIDKey, value, 24*time.Hour)
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {
 		return err
 	}
+
 	select {
 	case <-ctx.Done():
 		return errors.New("timeout reached")
@@ -174,6 +160,7 @@ func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, tok
 	return nil
 }
 
+// GenerateToken creates a signed JWT with standard subject/exp/iat claims.
 func (auth *AuthHandler) GenerateToken(userID string) (string, error) {
 	secret := []byte(os.Getenv("SECRET"))
 
