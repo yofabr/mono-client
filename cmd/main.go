@@ -11,6 +11,8 @@ import (
 )
 
 func main() {
+	// Load environment variables from .env so local development
+	// behaves the same as deployment configuration.
 	err := godotenv.Load()
 
 	if err != nil {
@@ -18,9 +20,11 @@ func main() {
 	}
 
 	app := application.NewApp()
+	// Initialize shared infrastructure dependencies (Postgres and Redis).
 	app.Init()
 
 	api := api.NewApi(*app)
+	// Register HTTP handlers on the default mux.
 	api.Init()
 
 	port := ":" + os.Getenv("PORT")
