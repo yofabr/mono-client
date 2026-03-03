@@ -124,10 +124,12 @@ func (auth *AuthHandler) CheckAuthAbility(ctx context.Context, IP string, userId
 	}
 
 	// Saved format is: token|-|ip.
-	data = strings.Split(data, "|-|")[1]
+	parts := strings.SplitN(data, "|-|", 2)
+	if len(parts) != 2 {
+		return errors.New("invalid active session data")
+	}
 
-	fmt.Println("Existing IP:", data)
-	fmt.Println("User IP:", IP)
+	data = parts[1]
 
 	if data != IP {
 		return errors.New("another device has already signed into this account")
@@ -163,6 +165,9 @@ func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, tok
 // GenerateToken creates a signed JWT with standard subject/exp/iat claims.
 func (auth *AuthHandler) GenerateToken(userID string) (string, error) {
 	secret := []byte(os.Getenv("SECRET"))
+	if len(secret) == 0 {
+		return "", errors.New("missing jwt secret")
+	}
 
 	claims := jwt.MapClaims{
 		"sub": userID,

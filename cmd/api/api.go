@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -46,11 +48,8 @@ func (api *Api) Init() {
 			return
 		}
 
-		var creds auth.Credentials
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields() // Reject unexpected JSON keys early.
-
-		if dec.Decode(&creds) != nil {
+		creds, err := decodeCredentials(w, r)
+		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -76,11 +75,8 @@ func (api *Api) Init() {
 			return
 		}
 
-		var creds auth.Credentials
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields()
-
-		if dec.Decode(&creds) != nil {
+		creds, err := decodeCredentials(w, r)
+		if err != nil {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
@@ -100,20 +96,51 @@ func (api *Api) Init() {
 	}))
 }
 
+func decodeCredentials(w http.ResponseWriter, r *http.Request) (auth.Credentials, error) {
+	var creds auth.Credentials
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MiB
+
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(&creds); err != nil {
+		return auth.Credentials{}, err
+	}
+
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return auth.Credentials{}, errors.New("unexpected trailing data")
+	}
+
+	return creds, nil
+}
+
 // getClientIP extracts the original caller IP from proxy headers or socket addr.
 func getClientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		ips := strings.Split(xff, ",")
-		return strings.TrimSpace(ips[0])
+		ip := strings.TrimSpace(ips[0])
+		if net.ParseIP(ip) != nil {
+			return ip
+		}
 	}
 
-	if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
-		return xrip
+	if xrip := strings.TrimSpace(r.Header.Get("X-Real-IP")); xrip != "" {
+		if net.ParseIP(xrip) != nil {
+			return xrip
+		}
 	}
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		if net.ParseIP(r.RemoteAddr) != nil {
+			return r.RemoteAddr
+		}
+		return ""
 	}
+
+	if net.ParseIP(host) == nil {
+		return ""
+	}
+
 	return host
 }
