@@ -18,6 +18,20 @@ func (d *Databases) Redis() *redis.Client {
 	return d.redis
 }
 
+func (d *Databases) PostgresHealth(ctx context.Context) error {
+	if d.postgres == nil {
+		return nil
+	}
+	return d.postgres.Ping(ctx)
+}
+
+func (d *Databases) RedisHealth(ctx context.Context) error {
+	if d.redis == nil {
+		return nil
+	}
+	return d.redis.Ping(ctx).Err()
+}
+
 func (d *Databases) PG() *pgxpool.Pool {
 	return d.postgres
 }

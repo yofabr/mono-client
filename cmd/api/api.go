@@ -27,6 +27,30 @@ func NewApi(app application.Application) *Api {
 
 // Init registers all HTTP handlers on the default net/http mux.
 func (api *Api) Init() {
+	// Health liveness probe - app is running
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK\n"))
+	})
+
+	// Readiness probe - app can handle requests (DB and Redis connected)
+	http.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		if err := api.app.Databases.PostgresHealth(ctx); err != nil {
+			http.Error(w, "postgres not ready", http.StatusServiceUnavailable)
+			return
+		}
+
+		if err := api.app.Databases.RedisHealth(ctx); err != nil {
+			http.Error(w, "redis not ready", http.StatusServiceUnavailable)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK\n"))
+	})
+
 	// Health/root route that returns the resolved client IP.
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		clientIP := getClientIP(r)
