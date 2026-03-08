@@ -30,7 +30,7 @@ func (api *Api) Init() {
 	// Health liveness probe - app is running
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK\n"))
+		_, _ = w.Write([]byte("OK\n"))
 	})
 
 	// Readiness probe - app can handle requests (DB and Redis connected)
@@ -48,7 +48,7 @@ func (api *Api) Init() {
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK\n"))
+		_, _ = w.Write([]byte("OK\n"))
 	})
 
 	// Health/root route that returns the resolved client IP.
