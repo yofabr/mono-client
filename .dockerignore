@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Go
+go.work
+go.work.sum
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docs
+README.md
+LICENSE
+*.md
+
+# Dev
+.dockerignore
+Dockerfile
+Dockerfile.dev
+docker-compose*.yml
+
+# Env
+.env
+.env.*
+
+# Nix
+.direnv/
+flake.lock
+
+# Misc
