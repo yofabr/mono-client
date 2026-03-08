@@ -1,3 +1,15 @@
+# K8s deployment for mono-client
+# Before applying, populate the secrets:
+#   cp .env.example k8s/.env
+#   # Edit k8s/.env with actual values
+#   # Use sealed-secrets, envsubst, or manual secret creation
+#
+# Example with envsubst:
+#   export POSTGRES_PASSWORD=your_password_here
+#   envsubst < k8s/mono-client.yaml | kubectl apply -f -
+#
+# Or use a secrets manager (SealedSecrets, Vault, AWS Secrets Manager, etc.)
+---
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -12,7 +24,7 @@ type: Opaque
 stringData:
   .env: |
     PORT=8080
-    PG_DSN=postgresql://app_user:app_pass@postgres:5432/app_db?sslmode=disable
+    PG_DSN=postgresql://app_user:${POSTGRES_PASSWORD}@postgres:5432/app_db?sslmode=disable
     REDIS_ADD=redis:6379
     REDIS_PASS=
     REDIS_DB=0
@@ -25,7 +37,7 @@ metadata:
 type: Opaque
 stringData:
   POSTGRES_USER: app_user
-  POSTGRES_PASSWORD: app_pass
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
   POSTGRES_DB: app_db
 ---
 apiVersion: v1
