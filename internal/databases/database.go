@@ -67,16 +67,11 @@ func (d *Databases) NewRedis(addr, password string, db int) {
 		MinIdleConns: 2,
 	})
 
-	pong, err := rdb.Ping(ctx).Result()
-	if err != nil {
-		panic(err)
-	}
-
-	log.Println("Connected to Redis:", pong)
-
-	if err := rdb.Ping(ctx).Err(); err != nil {
+	if _, err := rdb.Ping(ctx).Result(); err != nil {
 		log.Fatal("redis connection failed:", err)
 	}
+
+	log.Println("Connected to Redis successfully")
 
 	d.redis = rdb
 }
