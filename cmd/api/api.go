@@ -81,6 +81,7 @@ func (api *Api) Init() {
 		ip := getClientIP(r)
 		res, err := authHandler.Login(ip, creds.Email, creds.Password)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
@@ -108,6 +109,7 @@ func (api *Api) Init() {
 		ip := getClientIP(r)
 		res, err := authHandler.Register(ip, creds.Email, creds.Password)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -133,6 +135,13 @@ func decodeCredentials(w http.ResponseWriter, r *http.Request) (auth.Credentials
 
 	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		return auth.Credentials{}, errors.New("unexpected trailing data")
+	}
+
+	if creds.Email == "" {
+		return auth.Credentials{}, errors.New("email is required")
+	}
+	if creds.Password == "" {
+		return auth.Credentials{}, errors.New("password is required")
 	}
 
 	return creds, nil
