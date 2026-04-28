@@ -149,17 +149,7 @@ func (auth *AuthHandler) SaveAuthentication(ctx context.Context, IP, userId, tok
 	pipe.Set(ctx, userIDKey, value, 24*time.Hour)
 
 	_, err := pipe.Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	select {
-	case <-ctx.Done():
-		return errors.New("timeout reached")
-	default:
-	}
-
-	return nil
+	return err
 }
 
 // GenerateToken creates a signed JWT with standard subject/exp/iat claims.
