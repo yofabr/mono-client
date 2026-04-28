@@ -2,6 +2,7 @@ package databases
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -20,14 +21,14 @@ func (d *Databases) Redis() *redis.Client {
 
 func (d *Databases) PostgresHealth(ctx context.Context) error {
 	if d.postgres == nil {
-		return nil
+		return errors.New("postgres connection not initialized")
 	}
 	return d.postgres.Ping(ctx)
 }
 
 func (d *Databases) RedisHealth(ctx context.Context) error {
 	if d.redis == nil {
-		return nil
+		return errors.New("redis connection not initialized")
 	}
 	return d.redis.Ping(ctx).Err()
 }
