@@ -6,13 +6,11 @@ import (
 	"time"
 )
 
-// visitor tracks requests for a single key inside the current time window.
 type visitor struct {
 	windowStart time.Time
 	count       int
 }
 
-// RateLimiter implements a simple fixed-window limiter in memory.
 type RateLimiter struct {
 	mu      sync.Mutex
 	limit   int
@@ -20,16 +18,30 @@ type RateLimiter struct {
 	storage map[string]visitor
 }
 
-// NewRateLimiter creates a limiter with request limit per time window.
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
-	return &RateLimiter{
+	rl := &RateLimiter{
 		limit:   limit,
 		window:  window,
 		storage: make(map[string]visitor),
 	}
+	go rl.cleanup()
+	return rl
 }
 
-// Allow returns true when the key can perform one more request in window.
+func (rl *RateLimiter) cleanup() {
+	ticker := time.NewTicker(rl.window)
+	defer ticker.Stop()
+	for range ticker.C {
+		rl.mu.Lock()
+		for key, entry := range rl.storage {
+			if time.Since(entry.windowStart) >= rl.window {
+				delete(rl.storage, key)
+			}
+		}
+		rl.mu.Unlock()
+	}
+}
+
 func (rl *RateLimiter) Allow(key string, now time.Time) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
@@ -49,7 +61,6 @@ func (rl *RateLimiter) Allow(key string, now time.Time) bool {
 	return true
 }
 
-// Handler wraps an endpoint and rejects requests once the limit is hit.
 func (rl *RateLimiter) Handler(next http.HandlerFunc, keyFn func(*http.Request) string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !rl.Allow(keyFn(r), time.Now()) {
